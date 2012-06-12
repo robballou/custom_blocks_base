@@ -86,3 +86,47 @@ class CustomBlocksBlock {
 		return $block;
 	}
 }
+
+/**
+ * Provide a simple way to make a block that outputs a list
+ * 
+ * Items just need to be added to the $links variable
+ */
+class CustomBlocksListBlock extends CustomBlocksBlock {
+  public $links = array();
+  
+  protected $pathCache = null;
+  
+  public function content($options = array()){
+    $items = array();
+    foreach ($this->links as $link) {
+      $options = array();
+      if (isset($link['attributes'])) {
+        $options['attributes'] = $link['attributes'];
+      }
+      array_push($items, l($link['title'], $this->parseUrl($link['href']), $options));
+    }
+    return array(
+      '#theme' => 'item_list',
+      '#items' => $items
+    );
+  }
+  
+  public function getNodePath() {
+    if ($this->pathCache) {
+      return $this->pathCache;
+    }
+    if (arg(0) == 'node' && is_numeric(arg(1))) {
+      $this->pathCache = drupal_lookup_path('alias', 'node/'. arg(1));
+      return $this->pathCache;
+    }
+  }
+  
+  public function parseUrl($url) {
+    return str_replace(
+      array('%node'),
+      array($this->getNodePath()),
+      $url
+    );
+  }
+}
