@@ -11,32 +11,33 @@ class CustomBlocksManager {
   /**
    * The prefix used for class names that this manager will pick up on
    */
-  public $class_prefix = '';
+  public $classPrefix = '';
 
   /**
    * Turn on/off some dpm messages
    */
-  public $debug = false;
+  public $debug = FALSE;
 
   /**
    * Create the manager and scan for classes
    *
-   * @param string $class_prefix
+   * @param string $classPrefix
+   *   Prefix for the class
    */
-  public function __construct($class_prefix) {
-    $this->class_prefix = $class_prefix;
+  public function __construct($classPrefix) {
+    $this->classPrefix = $classPrefix;
 
     $classes = get_declared_classes();
     foreach ($classes as $class) {
       // skip classes without our prefix
-      if (substr($class, 0, strlen($this->class_prefix)) != $this->class_prefix) {
+      if (substr($class, 0, strlen($this->classPrefix)) != $this->classPrefix) {
         continue;
       }
 
-      $block = new $class;
+      $block = new $class();
       $this->blocks[$block->delta] = array(
         'info' => t($block->description),
-        'cache' => DRUPAL_NO_CACHE
+        'cache' => DRUPAL_NO_CACHE,
       );
     }
   }
@@ -45,33 +46,38 @@ class CustomBlocksManager {
    * Check if the block exists
    *
    * @param string $delta
+   *   The block delta
    */
   public function blockExists($delta) {
     return isset($this->blocks[$delta]);
   }
 
   /**
-   * Figure out the class name that will be used for the class based on the delta
+   * Figure out the class name that will be used
    *
-   * @param string $class_prefix
+   * @param string $delta
+   *   The delta for the block
    */
   public function className($delta) {
-    return $this->class_prefix .'_'. ucwords($delta);
+    return $this->classPrefix . '_' . ucwords($delta);
   }
 
   /**
-   * Implements hook_block_configure
+   * Called from hook_block_configure()
    *
    * @param string $delta
+   *   The block delta
    */
   public function configure($delta = '') {
     if (!$this->blockExists($delta)) {
-      if ($this->debug) { dpm('Block does not exist: '. $delta); }
+      if ($this->debug) {
+        dpm('Block does not exist: ' . $delta);
+      }
       return;
     }
 
     $block = $this->getBlock($delta);
-    if ($block && method_exists($block, 'configure') && $block->configurable === true) {
+    if ($block && method_exists($block, 'configure') && $block->configurable === TRUE) {
       return $block->configure();
     }
   }
@@ -80,6 +86,7 @@ class CustomBlocksManager {
    * Create the block instance
    *
    * @param string $delta
+   *   The block delta
    */
   public function getBlock($delta) {
     $class = $this->className($delta);
@@ -87,44 +94,52 @@ class CustomBlocksManager {
       $block = new $class();
       return $block;
     }
-    if ($this->debug) { dpm('Class does not exist: '. $class); }
-    return false;
+    if ($this->debug) {
+      dpm('Class does not exist: ' . $class);
+    }
+    return FALSE;
   }
 
   /**
-   * Implements hook_block_info for this set of blocks
-   *
-   * @param string $class_prefix
+   * Called from hook_block_info for this set of blocks
    */
   public function info() {
     return $this->blocks;
   }
 
   /**
-   * Implements hook_block_save for this set of blocks
+   * Called from hook_block_save for this set of blocks
    *
-   * @param string $class_prefix
+   * @param string $delta
+   *   The block delta
+   * @param array $edit
+   *   The edit info
    */
-  public function save($delta = '', $edit) {
+  public function save($delta, $edit) {
     if (!$this->blockExists($delta)) {
-      if ($this->debug) { dpm('Block does not exist: '. $delta); }
+      if ($this->debug) {
+        dpm('Block does not exist: ' . $delta);
+      }
       return;
     }
 
     $block = $this->getBlock($delta);
-    if ($block && method_exists($block, 'save') && $block->configurable === true) {
+    if ($block && method_exists($block, 'save') && $block->configurable === TRUE) {
       return $block->save($edit);
     }
   }
 
   /**
-   * Implements hook_block_view
+   * Called from hook_block_view
    *
-   * @param string $class_prefix
+   * @param string $delta
+   *   The block delta
    */
   public function view($delta = '') {
     if (!$this->blockExists($delta)) {
-      if ($this->debug) { dpm('Block does not exist: '. $delta); }
+      if ($this->debug) {
+        dpm('Block does not exist: ' . $delta);
+      }
       return;
     }
 
