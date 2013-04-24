@@ -1,4 +1,4 @@
 name = Custom Blocks Base
 description = Provide a base set of classes for easily creating custom blocks
-package = ADG
+package = Other
 core = 7.x
